@@ -2,15 +2,17 @@ import React, { useRef, useEffect, useState } from 'react';
 
 interface SimulatorProps {
   commands: string[];
+  onReset: () => void; // New prop to notify parent to clear commands
 }
 
-const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
+const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [robotState, setRobotState] = useState({ x: 250, y: 250, angle: 0 });
   const [isRunning, setIsRunning] = useState(false);
   const [commandIndex, setCommandIndex] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Waiting for commands...');
 
+  // Drawing function
   const draw = (ctx: CanvasRenderingContext2D, state: { x: number; y: number; angle: number }) => {
     const { x, y, angle } = state;
     ctx.clearRect(0, 0, 500, 500);
@@ -29,12 +31,12 @@ const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
       ctx.stroke();
     }
 
-    // Robot body
+    // Robot
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    
-    // Circle body
+
+    // Body
     ctx.fillStyle = '#1976D2';
     ctx.strokeStyle = '#0D47A1';
     ctx.lineWidth = 2;
@@ -42,7 +44,7 @@ const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
     ctx.arc(0, 0, 20, 0, 2 * Math.PI);
     ctx.fill();
     ctx.stroke();
-    
+
     // Direction indicator
     ctx.fillStyle = '#FFC107';
     ctx.beginPath();
@@ -52,7 +54,7 @@ const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    
+
     ctx.restore();
 
     // Label
@@ -61,6 +63,7 @@ const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
     ctx.fillText('🤖', x - 15, y - 30);
   };
 
+  // Redraw whenever robot state changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -69,28 +72,32 @@ const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
     draw(ctx, robotState);
   }, [robotState]);
 
-  // Reset and run when commands change
+  // --- Run Simulation Logic ---
   useEffect(() => {
     if (commands.length === 0) {
-      setStatusMessage('No commands to execute');
+      // If commands are cleared (by reset), stop running
       setIsRunning(false);
+      setCommandIndex(0);
+      setStatusMessage('No commands to execute');
       return;
     }
 
-    if (isRunning) return;
-
-    setStatusMessage(`Executing ${commands.length} commands...`);
-    setIsRunning(true);
-    setCommandIndex(0);
-    setRobotState({ x: 250, y: 250, angle: 0 });
-  }, [commands]);
+    // Start the simulation if not already running
+    if (!isRunning) {
+      setIsRunning(true);
+      setCommandIndex(0);
+      // Reset robot position at the start of a new run
+      setRobotState({ x: 250, y: 250, angle: 0 });
+      setStatusMessage(`Executing ${commands.length} commands...`);
+    }
+  }, [commands]); // Re-run when the commands array changes
 
   // Execute commands one by one
   useEffect(() => {
     if (!isRunning || commandIndex >= commands.length) {
       if (commandIndex >= commands.length && commands.length > 0) {
         setIsRunning(false);
-        setStatusMessage('✅ All commands executed!');
+        setStatusMessage('✅ Simulation finished!');
       }
       return;
     }
@@ -98,17 +105,18 @@ const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
     const timer = setTimeout(() => {
       const command = commands[commandIndex];
       console.log(`Executing ${commandIndex + 1}/${commands.length}: ${command}`);
-      
-      setRobotState(prev => {
+
+      setRobotState((prev) => {
         const newState = { ...prev };
         const stepSize = 40;
-        
+
         if (command.includes('moveForward')) {
           const match = command.match(/moveForward\((\d+)\)/);
           if (match) {
             const steps = parseInt(match[1], 10);
             newState.x += Math.cos(newState.angle) * stepSize * steps;
             newState.y += Math.sin(newState.angle) * stepSize * steps;
+            // Keep robot in bounds
             newState.x = Math.max(20, Math.min(480, newState.x));
             newState.y = Math.max(20, Math.min(480, newState.y));
             setStatusMessage(`Moving forward ${steps} steps...`);
@@ -130,58 +138,86 @@ const Simulator: React.FC<SimulatorProps> = ({ commands }) => {
         } else {
           setStatusMessage(`Unknown command: ${command}`);
         }
-        
         return newState;
       });
-      
-      setCommandIndex(prev => prev + 1);
-    }, 500);
+
+      setCommandIndex((prev) => prev + 1);
+    }, 500); // Delay between commands (ms)
 
     return () => clearTimeout(timer);
   }, [commandIndex, commands, isRunning]);
 
+  // --- Reset Function ---
+  const handleReset = () => {
+    // Stop any ongoing simulation
+    setIsRunning(false);
+    setCommandIndex(0);
+    // Reset robot to origin
+    setRobotState({ x: 250, y: 250, angle: 0 });
+    setStatusMessage('Reset to origin');
+    // Clear the commands in the parent component (App)
+    onReset();
+  };
+
   return (
-    <div style={{ 
-      border: '1px solid #ddd', 
-      borderRadius: '8px', 
+    <div style={{
+      border: '1px solid #ddd',
+      borderRadius: '8px',
       padding: '15px',
-      background: '#fafafa'
+      background: '#fafafa',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-        🤖 Robot Simulator
-        <span style={{ 
-          fontSize: '12px', 
-          color: '#666', 
-          fontWeight: 'normal',
-          background: '#eee',
-          padding: '2px 10px',
-          borderRadius: '12px'
-        }}>
-          {commands.length} commands
-        </span>
-      </h3>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <canvas 
-          ref={canvasRef} 
-          width={500} 
-          height={500} 
-          style={{ 
-            border: '1px solid #ccc', 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <h3 style={{ margin: 0 }}>🤖 Robot Simulator</h3>
+        <div>
+          <button
+            onClick={handleReset}
+            style={{
+              padding: '6px 15px',
+              background: '#ff9800',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              marginRight: '10px'
+            }}
+          >
+            🔄 Reset
+          </button>
+          <span style={{ fontSize: '12px', color: '#666', background: '#eee', padding: '2px 10px', borderRadius: '12px' }}>
+            {commands.length} commands
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+        <canvas
+          ref={canvasRef}
+          width={500}
+          height={500}
+          style={{
+            border: '1px solid #ccc',
             borderRadius: '4px',
             background: 'white',
-            maxWidth: '100%'
-          }} 
+            maxWidth: '100%',
+            maxHeight: '100%'
+          }}
         />
       </div>
-      <div style={{ 
-        marginTop: '10px', 
+
+      <div style={{
+        marginTop: '10px',
         padding: '8px 12px',
         background: '#fff',
         borderRadius: '4px',
         border: '1px solid #eee',
-        fontSize: '14px', 
+        fontSize: '14px',
         color: '#555',
-        textAlign: 'center'
+        textAlign: 'center',
+        minHeight: '24px'
       }}>
         {statusMessage}
       </div>
