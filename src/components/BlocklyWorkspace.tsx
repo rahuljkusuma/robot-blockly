@@ -3,7 +3,7 @@ import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 
 // Import Blockly CSS - this is critical!
-import 'blockly/css';
+// import 'blockly/css';
 
 interface BlocklyWorkspaceProps {
   onRunCode: (code: string) => void;
