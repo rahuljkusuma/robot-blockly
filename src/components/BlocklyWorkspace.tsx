@@ -2,9 +2,6 @@ import React, { useRef, useEffect, useState } from 'react';
 import * as Blockly from 'blockly';
 import { javascriptGenerator } from 'blockly/javascript';
 
-// Import Blockly CSS - this is critical!
-// import 'blockly/css';
-
 interface BlocklyWorkspaceProps {
   onRunCode: (code: string) => void;
 }
@@ -19,7 +16,7 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
       if (!workspaceDiv.current) return;
 
       try {
-        // Clear existing block definitions
+        // Clear existing block definitions to prevent conflicts
         const blockDefinitions = Blockly.Blocks as any;
         ['move_forward', 'turn_right', 'turn_left'].forEach(blockType => {
           if (blockDefinitions[blockType]) {
@@ -27,7 +24,7 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
           }
         });
 
-        // Define blocks
+        // ✅ Define blocks with field_number (supports typing any degree)
         Blockly.defineBlocksWithJsonArray([
           {
             type: 'move_forward',
@@ -51,30 +48,36 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
             message0: 'Turn right %1 degrees',
             args0: [
               {
-                type: 'field_angle',
+                type: 'field_number',  // ✅ This allows typing any number
                 name: 'DEGREES',
-                angle: 90,
+                value: 90,
+                min: 1,
+                max: 360,
+                precision: 1,
               },
             ],
             previousStatement: null,
             nextStatement: null,
             colour: 230,
-            tooltip: 'Turn the robot right',
+            tooltip: 'Turn the robot right by a specified number of degrees',
           },
           {
             type: 'turn_left',
             message0: 'Turn left %1 degrees',
             args0: [
               {
-                type: 'field_angle',
+                type: 'field_number',  // ✅ This allows typing any number
                 name: 'DEGREES',
-                angle: 90,
+                value: 90,
+                min: 1,
+                max: 360,
+                precision: 1,
               },
             ],
             previousStatement: null,
             nextStatement: null,
             colour: 230,
-            tooltip: 'Turn the robot left',
+            tooltip: 'Turn the robot left by a specified number of degrees',
           },
         ]);
 
@@ -94,7 +97,7 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
           return `turnLeft(${degrees});\n`;
         };
 
-        // Use XML toolbox format - more reliable
+        // Use XML toolbox format
         const toolbox = `
           <xml xmlns="https://developers.google.com/blockly/xml">
             <category name="Robot Actions" colour="160">
@@ -211,7 +214,7 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
             fontWeight: 'bold',
           }}
         >
-          ▶ Run
+          ▶ Run Simulation
         </button>
         <span style={{ fontSize: '14px', color: '#666' }}>
           Blocks: {workspace ? workspace.getTopBlocks(false).length : 0}

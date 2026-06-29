@@ -33,3 +33,36 @@ pythonGenerator.addStatement('beep', function (block) {
 // C++ Generator
 export const cppGenerator = new Blockly.Generator('C++');
 // ... (rest of your C++ generator code)
+
+// JavaScript Generator
+javascriptGenerator.forBlock['turn_right'] = function(block: any) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turnRight(${degrees});\n`;
+};
+
+javascriptGenerator.forBlock['turn_left'] = function(block: any) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turnLeft(${degrees});\n`;
+};
+
+// Python Generator (if you have it)
+pythonGenerator.forBlock['turn_right'] = function(block: any) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turn_right(${degrees})\n`;
+};
+
+pythonGenerator.forBlock['turn_left'] = function(block: any) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turn_left(${degrees})\n`;
+};
+
+// C++ Generator (if you have it)
+cppGenerator.forBlock['turn_right'] = function(block: any) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turnRight(${degrees});\n`;
+};
+
+cppGenerator.forBlock['turn_left'] = function(block: any) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turnLeft(${degrees});\n`;
+};

@@ -1,11 +1,18 @@
-import Blockly from 'blockly';
+import * as Blockly from 'blockly';
 
-// Define custom robot blocks
 export const defineRobotBlocks = () => {
+  // Clear any existing block definitions to prevent warnings
+  const blockDefinitions = Blockly.Blocks as any;
+  ['move_forward', 'turn_right', 'turn_left', 'repeat_loop', 'beep'].forEach(blockType => {
+    if (blockDefinitions[blockType]) {
+      delete blockDefinitions[blockType];
+    }
+  });
+
   Blockly.defineBlocksWithJsonArray([
     {
       type: 'move_forward',
-      message0: 'Move forward %1',
+      message0: 'Move forward %1 steps',
       args0: [
         {
           type: 'field_number',
@@ -23,34 +30,40 @@ export const defineRobotBlocks = () => {
     },
     {
       type: 'turn_right',
-      message0: 'Turn right %1',
+      message0: 'Turn right %1 degrees',
       args0: [
         {
-          type: 'field_angle',
+          type: 'field_number',  // Changed from 'field_angle'
           name: 'DEGREES',
-          angle: 90,
+          value: 90,              // Default value
+          min: 1,                 // Minimum degrees
+          max: 360,               // Maximum degrees
+          precision: 1,           // Allow whole numbers
         },
       ],
       previousStatement: null,
       nextStatement: null,
       colour: 230,
-      tooltip: 'Turn the robot right by a certain angle.',
+      tooltip: 'Turn the robot right by a specified number of degrees.',
       helpUrl: '',
     },
     {
       type: 'turn_left',
-      message0: 'Turn left %1',
+      message0: 'Turn left %1 degrees',
       args0: [
         {
-          type: 'field_angle',
+          type: 'field_number',  // Changed from 'field_angle'
           name: 'DEGREES',
-          angle: 90,
+          value: 90,              // Default value
+          min: 1,                 // Minimum degrees
+          max: 360,               // Maximum degrees
+          precision: 1,           // Allow whole numbers
         },
       ],
       previousStatement: null,
       nextStatement: null,
       colour: 230,
-      tooltip: 'Turn the robot left by a certain angle.',
+      tooltip: 'Turn the robot left by a specified number of degrees.',
       helpUrl: '',
     },
     {
@@ -85,12 +98,13 @@ export const defineRobotBlocks = () => {
           value: 100,
           min: 50,
           max: 1000,
+          precision: 10,
         },
       ],
       previousStatement: null,
       nextStatement: null,
       colour: 330,
-      tooltip: 'Make the robot beep for a duration.',
+      tooltip: 'Make the robot beep for a duration in milliseconds.',
       helpUrl: '',
     },
   ]);
