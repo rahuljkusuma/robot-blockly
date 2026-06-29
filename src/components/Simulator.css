@@ -1,0 +1,61 @@
+.simulator-container {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+  background-color: #fafafa;
+  font-family: sans-serif;
+}
+
+.simulator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.simulator-header h3 {
+  margin: 0;
+}
+
+.sim-btn {
+  padding: 6px 15px;
+  margin-left: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.sim-btn.run {
+  background-color: #4CAF50;
+  color: white;
+}
+.sim-btn.run:hover:not(:disabled) {
+  background-color: #45a049;
+}
+.sim-btn.stop {
+  background-color: #f44336;
+  color: white;
+}
+.sim-btn.stop:hover:not(:disabled) {
+  background-color: #d32f2f;
+}
+.sim-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.simulator-canvas-wrapper {
+  display: flex;
+  justify-content: center;
+}
+.simulator-canvas {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.simulator-status {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #555;
+}

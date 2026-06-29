@@ -1,147 +1,249 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import * as Blockly from 'blockly'
-import { defineRobotBlocks } from '../blockly/blocks'
-import { defineGenerators } from '../blockly/generators'
-import { javascriptGenerator } from 'blockly/javascript'
-import { pythonGenerator } from 'blockly/python'
-import 'blockly/blocks'
+import React, { useRef, useEffect, useState } from 'react';
+import * as Blockly from 'blockly';
+import { javascriptGenerator } from 'blockly/javascript';
 
-type CodeTabs = 'javascript'|'python'|'cpp'
+// Import Blockly CSS - this is critical!
+import 'blockly/css';
 
-export interface BlocklyWorkspaceHandle {
-  runSimulation: () => void
+interface BlocklyWorkspaceProps {
+  onRunCode: (code: string) => void;
 }
 
-const BlocklyWorkspace = forwardRef<BlocklyWorkspaceHandle, { onRun?: (cmds:any[])=>void, onCodeChange?: (code:string, tab: CodeTabs)=>void }>(({ onRun, onCodeChange }, ref) => {
-  const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const [tab, setTab] = useState<CodeTabs>('javascript')
-  const [code, setCode] = useState('')
-
-  const resizeWorkspace = () => {
-    if (!workspaceRef.current) return
-    workspaceRef.current.resize()
-    Blockly.svgResize(workspaceRef.current)
-  }
+const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
+  const workspaceDiv = useRef<HTMLDivElement>(null);
+  const [workspace, setWorkspace] = useState<Blockly.WorkspaceSvg | null>(null);
+  const [code, setCode] = useState<string>('');
 
   useEffect(() => {
-    defineRobotBlocks()
-    defineGenerators()
-    if (!containerRef.current) return
-    workspaceRef.current = Blockly.inject(containerRef.current, {
-      scrollbars: true,
-      trashcan: false,
-      collapse: true
-    })
+    const timer = setTimeout(() => {
+      if (!workspaceDiv.current) return;
 
-    workspaceRef.current.addChangeListener(() => updateCode())
-    resizeWorkspace()
-    const handleResize = () => resizeWorkspace()
-    window.addEventListener('resize', handleResize)
+      try {
+        // Clear existing block definitions
+        const blockDefinitions = Blockly.Blocks as any;
+        ['move_forward', 'turn_right', 'turn_left'].forEach(blockType => {
+          if (blockDefinitions[blockType]) {
+            delete blockDefinitions[blockType];
+          }
+        });
 
-    const frame = window.requestAnimationFrame(() => resizeWorkspace())
+        // Define blocks
+        Blockly.defineBlocksWithJsonArray([
+          {
+            type: 'move_forward',
+            message0: 'Move forward %1 steps',
+            args0: [
+              {
+                type: 'field_number',
+                name: 'STEPS',
+                value: 1,
+                min: 1,
+                max: 10,
+              },
+            ],
+            previousStatement: null,
+            nextStatement: null,
+            colour: 160,
+            tooltip: 'Move the robot forward',
+          },
+          {
+            type: 'turn_right',
+            message0: 'Turn right %1 degrees',
+            args0: [
+              {
+                type: 'field_angle',
+                name: 'DEGREES',
+                angle: 90,
+              },
+            ],
+            previousStatement: null,
+            nextStatement: null,
+            colour: 230,
+            tooltip: 'Turn the robot right',
+          },
+          {
+            type: 'turn_left',
+            message0: 'Turn left %1 degrees',
+            args0: [
+              {
+                type: 'field_angle',
+                name: 'DEGREES',
+                angle: 90,
+              },
+            ],
+            previousStatement: null,
+            nextStatement: null,
+            colour: 230,
+            tooltip: 'Turn the robot left',
+          },
+        ]);
 
-    return () => {
-      window.cancelAnimationFrame(frame)
-      window.removeEventListener('resize', handleResize)
-      workspaceRef.current?.dispose()
-    }
-  }, [])
+        // Register JavaScript generators
+        javascriptGenerator.forBlock['move_forward'] = function(block: any) {
+          const steps = block.getFieldValue('STEPS');
+          return `moveForward(${steps});\n`;
+        };
 
-  useEffect(() => {
-    updateCode()
-  }, [tab])
+        javascriptGenerator.forBlock['turn_right'] = function(block: any) {
+          const degrees = block.getFieldValue('DEGREES');
+          return `turnRight(${degrees});\n`;
+        };
 
-  useImperativeHandle(ref, () => ({
-    runSimulation: runInSimulator
-  }), [onRun])
+        javascriptGenerator.forBlock['turn_left'] = function(block: any) {
+          const degrees = block.getFieldValue('DEGREES');
+          return `turnLeft(${degrees});\n`;
+        };
 
-  function updateCode() {
-    if (!workspaceRef.current) return
-    if (tab === 'javascript') {
-      const js = javascriptGenerator.workspaceToCode(workspaceRef.current)
-      setCode(js)
-      onCodeChange?.(js, 'javascript')
-    } else if (tab === 'python') {
-      const py = pythonGenerator.workspaceToCode(workspaceRef.current)
-      setCode(py)
-      onCodeChange?.(py, 'python')
-    } else {
-      const placeholder = '// C++ generator not available in this demo'
-      setCode(placeholder)
-      onCodeChange?.(placeholder, 'cpp')
-    }
-  }
+        // Use XML toolbox format - more reliable
+        const toolbox = `
+          <xml xmlns="https://developers.google.com/blockly/xml">
+            <category name="Robot Actions" colour="160">
+              <block type="move_forward"></block>
+              <block type="turn_right"></block>
+              <block type="turn_left"></block>
+            </category>
+            <category name="Control" colour="120">
+              <block type="controls_repeat_ext"></block>
+            </category>
+          </xml>
+        `;
 
-  function runInSimulator() {
-    if (!workspaceRef.current) return
-    // translate blocks to simple command list for simulator
-    const blocks = workspaceRef.current.getTopBlocks(true)
-    const cmds: any[] = []
-    function walk(block: Blockly.BlockSvg | null) {
-      if (!block) return
-      const t = block.type
-      if (t === 'robot_move') cmds.push({type:'move', distance: Number(block.getFieldValue('DIST'))})
-      if (t === 'robot_turn') cmds.push({type:'turn', angle: Number(block.getFieldValue('ANGLE')) * (block.getFieldValue('DIR')==='LEFT'?-1:1)})
-      if (t === 'robot_wait') cmds.push({type:'wait', time: Number(block.getFieldValue('TIME'))})
-      if (t === 'robot_repeat') {
-        const times = Number(block.getFieldValue('TIMES'))
-        const stack = block.getInputTargetBlock('DO')
-        for (let i=0;i<times;i++) { walk(stack); }
+        const container = workspaceDiv.current;
+        if (container.clientHeight === 0) {
+          container.style.height = '500px';
+        }
+
+        console.log('Injecting Blockly...');
+        
+        const newWorkspace = Blockly.inject(container, {
+          toolbox: toolbox,
+          trashcan: true,
+          renderer: 'zelos',
+          zoom: {
+            controls: true,
+            wheel: true,
+            startScale: 0.9,
+            maxScale: 1.5,
+            minScale: 0.5,
+            scaleSpeed: 1.1,
+          },
+          grid: {
+            spacing: 20,
+            length: 3,
+            colour: '#ccc',
+            snap: true,
+          },
+          move: {
+            scrollbars: true,
+            drag: true,
+            wheel: true,
+          },
+        });
+
+        console.log('Blockly injected successfully!');
+        setWorkspace(newWorkspace);
+
+        const handleChange = () => {
+          try {
+            const generatedCode = javascriptGenerator.workspaceToCode(newWorkspace);
+            setCode(generatedCode);
+          } catch (e) {
+            console.error('Code generation error:', e);
+          }
+        };
+
+        newWorkspace.addChangeListener(handleChange);
+        setTimeout(handleChange, 100);
+
+        return () => {
+          newWorkspace.dispose();
+        };
+      } catch (error) {
+        console.error('Error initializing Blockly:', error);
       }
-      walk(block.getNextBlock())
-    }
-    blocks.forEach(b=>walk(b))
-    if (onRun) onRun(cmds)
-  }
+    }, 100);
 
-  function addBlockToWorkspace(type: string) {
-    if (!workspaceRef.current) return
+    return () => clearTimeout(timer);
+  }, []);
 
-    const block = workspaceRef.current.newBlock(type)
-    const blockCount = workspaceRef.current.getAllBlocks(false).length
-    const x = 20 + (blockCount % 4) * 24
-    const y = 20 + Math.floor(blockCount / 4) * 80
-
-    block.initSvg()
-    block.render()
-    block.moveBy(x, y)
-
-    if (type === 'robot_move') {
-      block.setFieldValue(20, 'DIST')
+  const handleRun = () => {
+    if (workspace) {
+      try {
+        const generatedCode = javascriptGenerator.workspaceToCode(workspace);
+        onRunCode(generatedCode);
+        console.log('Running code:', generatedCode);
+      } catch (e) {
+        console.error('Error running code:', e);
+      }
     }
-    if (type === 'robot_turn') {
-      block.setFieldValue(90, 'ANGLE')
-      block.setFieldValue('LEFT', 'DIR')
-    }
-    if (type === 'robot_wait') {
-      block.setFieldValue(500, 'TIME')
-    }
-    if (type === 'robot_repeat') {
-      block.setFieldValue(2, 'TIMES')
-    }
-
-    resizeWorkspace()
-    return block
-  }
+  };
 
   return (
-    <div style={{display:'flex',height:'100%', overflow:'hidden'}}>
-      <div style={{width:320, borderRight:'1px solid #ddd', display:'flex', flexDirection:'column', background:'white', padding:10, boxSizing:'border-box', gap:8}}>
-        <h4 style={{margin:'0 0 8px 0'}}>Blocks Toolbox</h4>
-        <div style={{padding:8, background:'#6c757d', color:'white', borderRadius:4, textAlign:'center', fontSize:'12px'}}>📋 Load Demo Blocks</div>
-        <div style={{display:'flex', flexDirection:'column', gap:6, marginTop:4}}>
-          <button type="button" onClick={() => addBlockToWorkspace('robot_move')} style={{padding:8, textAlign:'left', border:'1px solid #ddd', background:'#fff', cursor:'pointer', borderRadius:4}}>Move Forward</button>
-          <button type="button" onClick={() => addBlockToWorkspace('robot_turn')} style={{padding:8, textAlign:'left', border:'1px solid #ddd', background:'#fff', cursor:'pointer', borderRadius:4}}>Turn</button>
-          <button type="button" onClick={() => addBlockToWorkspace('robot_wait')} style={{padding:8, textAlign:'left', border:'1px solid #ddd', background:'#fff', cursor:'pointer', borderRadius:4}}>Wait</button>
-          <button type="button" onClick={() => addBlockToWorkspace('robot_repeat')} style={{padding:8, textAlign:'left', border:'1px solid #ddd', background:'#fff', cursor:'pointer', borderRadius:4}}>Repeat</button>
-        </div>
+    <div style={{ 
+      border: '1px solid #ddd', 
+      borderRadius: '8px', 
+      overflow: 'hidden',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: '#fff'
+    }}>
+      <div style={{ 
+        padding: '10px 15px', 
+        background: '#f5f5f5', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        borderBottom: '1px solid #ddd',
+        flexShrink: 0,
+        zIndex: 10
+      }}>
+        <button 
+          onClick={handleRun}
+          style={{
+            padding: '8px 20px',
+            background: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold',
+          }}
+        >
+          ▶ Run
+        </button>
+        <span style={{ fontSize: '14px', color: '#666' }}>
+          Blocks: {workspace ? workspace.getTopBlocks(false).length : 0}
+        </span>
       </div>
-      <div style={{flex:1, display:'flex', flexDirection:'column', background:'#fafafa', minWidth:0, overflow:'hidden', position:'relative'}}>
-        <div ref={containerRef} style={{flex:1, width:'100%', minHeight:0, position:'relative', background:'#fff', border:'1px solid #eee', minHeight:420}} />
+      <div 
+        ref={workspaceDiv} 
+        style={{ 
+          width: '100%', 
+          height: '500px',
+          minHeight: '500px',
+          flex: '1',
+          position: 'relative'
+        }} 
+      />
+      <div style={{ 
+        padding: '10px 15px', 
+        background: '#1e1e1e', 
+        color: '#d4d4d4',
+        maxHeight: '150px',
+        overflow: 'auto',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        flexShrink: 0,
+        borderTop: '1px solid #333'
+      }}>
+        <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+          {code || '// Generated JavaScript code will appear here'}
+        </pre>
       </div>
     </div>
-  )
-})
+  );
+};
 
-export default BlocklyWorkspace
+export default BlocklyWorkspace;

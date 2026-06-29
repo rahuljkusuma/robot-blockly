@@ -1,60 +1,35 @@
-// VITE_REFRESH: update generator definitions to avoid stale code
-import * as Blockly from 'blockly'
-import { javascriptGenerator } from 'blockly/javascript'
-import { pythonGenerator } from 'blockly/python'
+import * as Blockly from 'blockly';
+import { javascriptGenerator } from 'blockly/javascript';
 
-export function defineGenerators() {
-  if ((window as any).__robotBlocklyGeneratorsRegistered) {
-    return
-  }
+// Remove this line if it causes errors:
+// import { pythonGenerator } from 'blockly/python';
 
-  // JavaScript generators
-  javascriptGenerator.forBlock['robot_move'] = function(block: any) {
-    const dist = Number(block.getFieldValue('DIST')) || 0
-    return `robot.move(${dist});\n`
-  }
+// Instead, create a simple Python generator manually:
+export const pythonGenerator = new Blockly.Generator('Python');
 
-  javascriptGenerator.forBlock['robot_turn'] = function(block: any) {
-    const dir = block.getFieldValue('DIR')
-    const angle = Number(block.getFieldValue('ANGLE')) || 0
-    const signed = dir === 'LEFT' ? -angle : angle
-    return `robot.turn(${signed});\n`
-  }
+// Add your Python generator functions here
+pythonGenerator.addStatement('move_forward', function (block) {
+  const steps = block.getFieldValue('STEPS');
+  return `move_forward(${steps})\n`;
+});
+pythonGenerator.addStatement('turn_right', function (block) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turn_right(${degrees})\n`;
+});
+pythonGenerator.addStatement('turn_left', function (block) {
+  const degrees = block.getFieldValue('DEGREES');
+  return `turn_left(${degrees})\n`;
+});
+pythonGenerator.addStatement('repeat_loop', function (block) {
+  const times = block.getFieldValue('TIMES');
+  const branch = pythonGenerator.statementToCode(block, 'DO');
+  return `for i in range(${times}):\n${branch}`;
+});
+pythonGenerator.addStatement('beep', function (block) {
+  const duration = block.getFieldValue('DURATION');
+  return `beep(${duration})\n`;
+});
 
-  javascriptGenerator.forBlock['robot_wait'] = function(block: any) {
-    const t = Number(block.getFieldValue('TIME')) || 0
-    return `await robot.wait(${t});\n`
-  }
-
-  javascriptGenerator.forBlock['robot_repeat'] = function(block: any) {
-    const times = Number(block.getFieldValue('TIMES')) || 0
-    const branch = javascriptGenerator.statementToCode(block, 'DO')
-    return `for(let i=0;i<${times};i++){\n${branch}}\n`
-  }
-
-  // Python generators
-  pythonGenerator.forBlock['robot_move'] = function(block: any) {
-    const dist = Number(block.getFieldValue('DIST')) || 0
-    return `robot.move(${dist})\n`
-  }
-
-  pythonGenerator.forBlock['robot_turn'] = function(block: any) {
-    const dir = block.getFieldValue('DIR')
-    const angle = Number(block.getFieldValue('ANGLE')) || 0
-    const signed = dir === 'LEFT' ? -angle : angle
-    return `robot.turn(${signed})\n`
-  }
-
-  pythonGenerator.forBlock['robot_wait'] = function(block: any) {
-    const t = Number(block.getFieldValue('TIME')) || 0
-    return `robot.wait(${t})\n`
-  }
-
-  pythonGenerator.forBlock['robot_repeat'] = function(block: any) {
-    const times = Number(block.getFieldValue('TIMES')) || 0
-    const branch = pythonGenerator.statementToCode(block, 'DO')
-    return `for _ in range(${times}):\n${Blockly.utils.string.indent(branch, Blockly.Python.INDENT)}\n`
-  }
-
-  ;(window as any).__robotBlocklyGeneratorsRegistered = true
-}
+// C++ Generator
+export const cppGenerator = new Blockly.Generator('C++');
+// ... (rest of your C++ generator code)

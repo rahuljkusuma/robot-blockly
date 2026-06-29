@@ -1,91 +1,97 @@
-import * as Blockly from 'blockly'
+import Blockly from 'blockly';
 
-export function defineRobotBlocks() {
-  if ((window as any).__robotBlocklyBlocksRegistered) {
-    return
-  }
+// Define custom robot blocks
+export const defineRobotBlocks = () => {
   Blockly.defineBlocksWithJsonArray([
     {
-      "type": "robot_move",
-      "message0": "move forward %1 cm",
-      "args0": [
+      type: 'move_forward',
+      message0: 'Move forward %1',
+      args0: [
         {
-          "type": "field_number",
-          "name": "DIST",
-          "value": 10,
-          "min": 0
-        }
+          type: 'field_number',
+          name: 'STEPS',
+          value: 1,
+          min: 1,
+          max: 10,
+        },
       ],
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 160,
-      "tooltip": "Move the robot forward",
-      "helpUrl": ""
+      previousStatement: null,
+      nextStatement: null,
+      colour: 160,
+      tooltip: 'Move the robot forward a number of steps.',
+      helpUrl: '',
     },
     {
-      "type": "robot_turn",
-      "message0": "turn %1 %2 degrees",
-      "args0": [
+      type: 'turn_right',
+      message0: 'Turn right %1',
+      args0: [
         {
-          "type": "field_dropdown",
-          "name": "DIR",
-          "options": [["left","LEFT"],["right","RIGHT"]]
+          type: 'field_angle',
+          name: 'DEGREES',
+          angle: 90,
         },
-        {
-          "type": "field_number",
-          "name": "ANGLE",
-          "value": 90,
-          "min": 0,
-          "max": 360
-        }
       ],
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 230,
-      "tooltip": "Turn the robot",
-      "helpUrl": ""
+      previousStatement: null,
+      nextStatement: null,
+      colour: 230,
+      tooltip: 'Turn the robot right by a certain angle.',
+      helpUrl: '',
     },
     {
-      "type": "robot_wait",
-      "message0": "wait %1 ms",
-      "args0": [
+      type: 'turn_left',
+      message0: 'Turn left %1',
+      args0: [
         {
-          "type": "field_number",
-          "name": "TIME",
-          "value": 500,
-          "min": 0
-        }
+          type: 'field_angle',
+          name: 'DEGREES',
+          angle: 90,
+        },
       ],
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 120,
-      "tooltip": "Pause",
-      "helpUrl": ""
+      previousStatement: null,
+      nextStatement: null,
+      colour: 230,
+      tooltip: 'Turn the robot left by a certain angle.',
+      helpUrl: '',
     },
     {
-      "type": "robot_repeat",
-      "message0": "repeat %1 times %2 do %3",
-      "args0": [
+      type: 'repeat_loop',
+      message0: 'Repeat %1 times %2',
+      args0: [
         {
-          "type": "field_number",
-          "name": "TIMES",
-          "value": 2,
-          "min": 1
+          type: 'field_number',
+          name: 'TIMES',
+          value: 5,
+          min: 1,
+          max: 100,
         },
         {
-          "type": "input_dummy"
+          type: 'input_statement',
+          name: 'DO',
         },
-        {
-          "type": "input_statement",
-          "name": "DO"
-        }
       ],
-      "previousStatement": null,
-      "nextStatement": null,
-      "colour": 260,
-      "tooltip": "Repeat a block sequence",
-      "helpUrl": ""
-    }
-  ])
-  ;(window as any).__robotBlocklyBlocksRegistered = true
-}
+      previousStatement: null,
+      nextStatement: null,
+      colour: 120,
+      tooltip: 'Repeat a set of commands a number of times.',
+      helpUrl: '',
+    },
+    {
+      type: 'beep',
+      message0: 'Beep for %1 ms',
+      args0: [
+        {
+          type: 'field_number',
+          name: 'DURATION',
+          value: 100,
+          min: 50,
+          max: 1000,
+        },
+      ],
+      previousStatement: null,
+      nextStatement: null,
+      colour: 330,
+      tooltip: 'Make the robot beep for a duration.',
+      helpUrl: '',
+    },
+  ]);
+};

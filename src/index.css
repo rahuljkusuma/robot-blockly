@@ -1,138 +1,74 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
-  margin: 0;
-}
-
+html,
+body,
 #root {
-  width: 100%;
-  max-width: none;
   margin: 0;
   padding: 0;
-  border-inline: none;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  text-align: left;
+  height: 100%;
   overflow: hidden;
 }
 
-/* Keep the Blockly workspace in a normal, non-overlapping layout */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f0f2f5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Blockly CSS fix */
 .blocklySvg {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: none !important;
-  margin-left: 0 !important;
+  background-color: #fff !important;
 }
 
-.blocklyMainBackground {
-  fill: #ffffff !important;
+.blocklyToolboxDiv {
+  background-color: #f8f9fa !important;
+  border-right: 1px solid #ddd !important;
+  width: 200px !important;
+  padding: 8px 0 !important;
+  overflow-y: auto !important;
 }
 
-.blocklyToolboxDiv,
-.blocklyTrashDiv,
-.blocklyTrash {
+.blocklyTreeRow {
+  padding: 8px 15px !important;
+  margin: 2px 8px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+}
+
+.blocklyTreeRow:hover {
+  background-color: #e9ecef !important;
+}
+
+.blocklyTreeSelected {
+  background-color: #d1e7dd !important;
+}
+
+.blocklyTreeIcon {
   display: none !important;
 }
 
-body {
-  margin: 0;
+.blocklyTreeRowContentContainer {
+  display: flex !important;
+  align-items: center !important;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.blocklyTreeLabel {
+  font-weight: 500 !important;
+  color: #333 !important;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+/* Fix for the workspace */
+.blocklyWorkspace {
+  background-color: #fff !important;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.blocklyTrash {
+  right: 20px !important;
+  bottom: 20px !important;
 }
