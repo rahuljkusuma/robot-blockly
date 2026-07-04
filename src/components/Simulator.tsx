@@ -13,16 +13,16 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
   const [commandIndex, setCommandIndex] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Waiting for commands...');
   const lastProcessedIndex = useRef<number>(0);
+  const [isWaiting, setIsWaiting] = useState(false); // Track wait state
   
-  // Canvas size - now much larger!
-  const CANVAS_SIZE = 1000; // Increased from 500 to 700
+  const CANVAS_SIZE = 1000;
 
   // Drawing function
   const draw = (ctx: CanvasRenderingContext2D, state: { x: number; y: number; angle: number }) => {
     const { x, y, angle } = state;
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-    // Grid - more spacing for larger canvas
+    // Grid
     ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 1;
     const gridSpacing = 50;
@@ -37,13 +37,12 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
       ctx.stroke();
     }
 
-    // Robot (scaled for larger canvas)
+    // Robot
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
 
-    // Body - larger
-    const robotRadius = 25; // Increased from 20
+    const robotRadius = 25;
     ctx.fillStyle = '#1976D2';
     ctx.strokeStyle = '#0D47A1';
     ctx.lineWidth = 3;
@@ -52,7 +51,6 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
     ctx.fill();
     ctx.stroke();
 
-    // Direction indicator - larger
     ctx.fillStyle = '#FFC107';
     ctx.beginPath();
     ctx.moveTo(robotRadius + 8, 0);
@@ -64,12 +62,10 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
 
     ctx.restore();
 
-    // Label
     ctx.fillStyle = '#333';
     ctx.font = '18px Arial';
     ctx.fillText('🤖', x - 20, y - 40);
 
-    // Coordinates display
     ctx.fillStyle = '#666';
     ctx.font = '12px Arial';
     ctx.fillText(`(${Math.round(x)}, ${Math.round(y)})`, 10, 20);
@@ -96,18 +92,22 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
       setIsRunning(false);
       setCommandIndex(0);
       lastProcessedIndex.current = 0;
+      setIsWaiting(false);
       setStatusMessage('No commands to execute');
       return;
     }
 
-    if (!isRunning && commandIndex < commands.length) {
+    if (!isRunning && commandIndex < commands.length && !isWaiting) {
       setIsRunning(true);
       setStatusMessage(`Executing commands ${commandIndex + 1} to ${commands.length}...`);
     }
-  }, [commands, commandIndex, isRunning]);
+  }, [commands, commandIndex, isRunning, isWaiting]);
 
   // Execute commands one by one
   useEffect(() => {
+    // If waiting, don't process next command
+    if (isWaiting) return;
+    
     if (!isRunning || commandIndex >= commands.length) {
       if (commandIndex >= commands.length && commands.length > 0) {
         setIsRunning(false);
@@ -117,13 +117,36 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
       return;
     }
 
-    const timer = setTimeout(() => {
-      const command = commands[commandIndex];
-      console.log(`Executing ${commandIndex + 1}/${commands.length}: ${command}`);
+    const command = commands[commandIndex];
+    console.log(`Executing ${commandIndex + 1}/${commands.length}: ${command}`);
 
+    // Check if this is a wait command - handle it differently
+    if (command.includes('wait')) {
+      const match = command.match(/wait\(([\d.]+)\)/);
+      if (match) {
+        const seconds = parseFloat(match[1]);
+        setStatusMessage(`⏳ Waiting ${seconds} seconds...`);
+        setIsWaiting(true);
+        
+        // Convert seconds to milliseconds
+        const delayMs = seconds * 1000;
+        
+        setTimeout(() => {
+          // Wait is complete - move to next command
+          setIsWaiting(false);
+          setCommandIndex((prev) => prev + 1);
+          setStatusMessage(`✅ Wait complete (${seconds}s)`);
+        }, delayMs);
+        
+        return; // Don't proceed to next command yet
+      }
+    }
+
+    // Regular command (not wait) - execute immediately
+    const timer = setTimeout(() => {
       setRobotState((prev) => {
         const newState = { ...prev };
-        const stepSize = 50; // Increased from 40 for larger canvas
+        const stepSize = 50;
 
         if (command.includes('moveForward')) {
           const match = command.match(/moveForward\((\d+)\)/);
@@ -131,7 +154,6 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
             const steps = parseInt(match[1], 10);
             newState.x += Math.cos(newState.angle) * stepSize * steps;
             newState.y += Math.sin(newState.angle) * stepSize * steps;
-            // Keep robot in bounds (with margin)
             const margin = 30;
             newState.x = Math.max(margin, Math.min(CANVAS_SIZE - margin, newState.x));
             newState.y = Math.max(margin, Math.min(CANVAS_SIZE - margin, newState.y));
@@ -162,18 +184,11 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
             newState.angle -= degrees * (Math.PI / 180);
             setStatusMessage(`Turning left ${degrees} degrees...`);
           }
-        } else if (command.includes('wait')) {
-          const match = command.match(/wait\(([\d.]+)\)/);
-          if (match) {
-            const seconds = parseFloat(match[1]);
-            setStatusMessage(`Waiting ${seconds} seconds...`);
-          }
         } else if (command.includes('beep')) {
           const match = command.match(/beep\((\d+)\)/);
           if (match) {
             const duration = parseInt(match[1], 10);
             setStatusMessage(`🔊 Beeping for ${duration}ms...`);
-            // Visual feedback for beep
             const canvas = canvasRef.current;
             if (canvas) {
               const ctx = canvas.getContext('2d');
@@ -199,13 +214,14 @@ const Simulator: React.FC<SimulatorProps> = ({ commands, onReset }) => {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [commandIndex, commands, isRunning]);
+  }, [commandIndex, commands, isRunning, isWaiting]);
 
   // --- Reset Function ---
   const handleReset = () => {
     setIsRunning(false);
     setCommandIndex(0);
     lastProcessedIndex.current = 0;
+    setIsWaiting(false);
     setRobotState({ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2, angle: 0 });
     setStatusMessage('🔄 Reset to origin');
     onReset();
