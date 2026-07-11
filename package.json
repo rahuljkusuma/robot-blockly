@@ -1,30 +1,74 @@
 {
   "name": "robot-blockly",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "author": {
+    "name": "Rahul J Kusuma",
+    "email": "rahuljkusuma@example.com"
+  },
   "type": "module",
+  "description": "Robot Blockly Desktop Application",
+  "main": "dist-electron/electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "build": "vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:all": "npm run build && npm run build:electron",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "npm run build:all && electron-builder",
+    "electron:build:win": "npm run build:all && electron-builder --win",
+    "electron:build:mac": "npm run build:all && electron-builder --mac",
+    "electron:build:linux": "npm run build:all && electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.rahuljkusuma.robotblockly",
+    "productName": "Robot Blockly",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "public",
+        "to": "public",
+        "filter": ["**/*"]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Development"
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "electron": "^31.2.0",
+    "electron-builder": "^24.13.3",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
+    "wait-on": "^7.2.0"
   },
   "dependencies": {
     "blockly": "^11.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.9.0",
-    "@types/react": "^18.2.66",
-    "@types/react-dom": "^18.2.22",
-    "@vitejs/plugin-react": "^4.2.1",
-    "eslint": "^9.9.0",
-    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
-    "eslint-plugin-react-refresh": "^0.4.9",
-    "globals": "^15.9.0",
-    "typescript": "^5.2.2",
-    "typescript-eslint": "^8.0.1",
-    "vite": "^5.2.0"
   }
 }

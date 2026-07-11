@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import BlocklyWorkspace from './components/BlocklyWorkspace';
 import Simulator from './components/Simulator';
 import CodeViewer from './components/CodeViewer';
