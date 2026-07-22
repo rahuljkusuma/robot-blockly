@@ -18,7 +18,7 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
       try {
         // Clear existing block definitions
         const blockDefinitions = Blockly.Blocks as any;
-        ['move_forward', 'move_backward', 'turn_right', 'turn_left', 'repeat_loop', 'wait', 'beep'].forEach(blockType => {
+        ['move_forward', 'move_backward', 'move_up', 'move_down', 'turn_right', 'turn_left', 'repeat_loop', 'wait', 'beep'].forEach(blockType => {
           if (blockDefinitions[blockType]) {
             delete blockDefinitions[blockType];
           }
@@ -26,7 +26,7 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
 
         // Define all blocks
         Blockly.defineBlocksWithJsonArray([
-          // Movement Blocks
+          // Movement Blocks (2D)
           {
             type: 'move_forward',
             message0: 'Move forward %1 steps',
@@ -43,6 +43,24 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
             nextStatement: null,
             colour: 160,
           },
+          // 3D Movement Blocks
+          {
+            type: 'move_up',
+            message0: 'Move up %1 steps',
+            args0: [{ type: 'field_number', name: 'STEPS', value: 1, min: 1, max: 10 }],
+            previousStatement: null,
+            nextStatement: null,
+            colour: 280,
+          },
+          {
+            type: 'move_down',
+            message0: 'Move down %1 steps',
+            args0: [{ type: 'field_number', name: 'STEPS', value: 1, min: 1, max: 10 }],
+            previousStatement: null,
+            nextStatement: null,
+            colour: 280,
+          },
+          // Turn Blocks
           {
             type: 'turn_right',
             message0: 'Turn right %1 degrees',
@@ -96,6 +114,12 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
         javascriptGenerator.forBlock['move_backward'] = function(block: any) {
           return `moveBackward(${block.getFieldValue('STEPS')});\n`;
         };
+        javascriptGenerator.forBlock['move_up'] = function(block: any) {
+          return `moveUp(${block.getFieldValue('STEPS')});\n`;
+        };
+        javascriptGenerator.forBlock['move_down'] = function(block: any) {
+          return `moveDown(${block.getFieldValue('STEPS')});\n`;
+        };
         javascriptGenerator.forBlock['turn_right'] = function(block: any) {
           return `turnRight(${block.getFieldValue('DEGREES')});\n`;
         };
@@ -114,13 +138,14 @@ const BlocklyWorkspace: React.FC<BlocklyWorkspaceProps> = ({ onRunCode }) => {
           return `beep(${block.getFieldValue('DURATION')});\n`;
         };
 
-        // --- OPTION 1: Flyout Toolbox (All blocks visible at once) ---
-        // This shows all blocks in a single flyout, no categories
+        // --- Flyout Toolbox ---
         const toolbox = {
           kind: 'flyoutToolbox',
           contents: [
             { kind: 'block', type: 'move_forward' },
             { kind: 'block', type: 'move_backward' },
+            { kind: 'block', type: 'move_up' },
+            { kind: 'block', type: 'move_down' },
             { kind: 'block', type: 'turn_right' },
             { kind: 'block', type: 'turn_left' },
             { kind: 'block', type: 'repeat_loop' },

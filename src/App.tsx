@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import BlocklyWorkspace from './components/BlocklyWorkspace';
-import Simulator from './components/Simulator';
+import Simulator3D from './components/Simulator3D';
 import CodeViewer from './components/CodeViewer';
 import './App.css';
 
@@ -86,7 +86,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🤖 Robot Blockly</h1>
+        <h1>🤖 3D Robot Blockly</h1>
         <p className="app-subtitle">Drag blocks → Run simulation → View code</p>
       </header>
       <main className="app-main">
@@ -95,9 +95,9 @@ function App() {
           <BlocklyWorkspace onRunCode={handleRunCode} />
         </div>
 
-        {/* Column 2: Simulator */}
+        {/* Column 2: 3D Simulator */}
         <div className="simulator-column">
-          <Simulator commands={commands} onReset={handleResetSimulation} />
+          <Simulator3D commands={commands} onReset={handleResetSimulation} />
         </div>
 
         {/* Column 3: Code Viewer */}
